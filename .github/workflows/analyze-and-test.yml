@@ -1,0 +1,61 @@
+# Action name here
+name: Code Maintenance
+
+on:
+  # Triggered on main branch when lib/ or test/ contents change
+  push:
+    branches: [main]
+    paths:
+      - "organizer/"
+      - "test/"
+  # And every pull request to main
+  pull_request:
+    branches: [main]
+
+  # Allows manual triggering
+  workflow_dispatch:
+
+jobs:
+  detect-secrets:
+    name: No committed secrets
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          set-safe-directory: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Install detect-secrets
+        run: pip install detect-secrets
+      - name: Scan for secrets
+        run: detect-secrets scan --baseline .secrets.baseline
+  prettier-check:
+    name: Prettier formatted files
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          set-safe-directory: true
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Install prettier
+        run: npm install -g prettier
+      - name: Run prettier against files
+        run: prettier -c .
+  analyze-code:
+    name: No code smells
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          set-safe-directory: true
+      - name: Setup environment
+        uses: ./.github/actions/setup-env
+      - name: Lint code
+        uses: chartboost/ruff-action@v1
+      - name: Check code formatting
+        uses: psf/black@stable
+        with:
+          options: "--check"

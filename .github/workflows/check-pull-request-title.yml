@@ -1,0 +1,19 @@
+# Action name here
+name: Conventional Commits
+
+on:
+  pull_request:
+    types: [edited, opened]
+    branches: [main]
+
+  # Allows manual triggering
+  workflow_dispatch:
+
+jobs:
+  check-title-format:
+    name: PR title matches spec
+    runs-on: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check if PR title matches regex
+        uses: ./.github/actions/cc-title
