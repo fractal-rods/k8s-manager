@@ -1,5 +1,4 @@
 import asyncio
-import threading
 
 
 class Client:
@@ -21,7 +20,6 @@ class Client:
             await asyncio.sleep(1)
             print(await self.recv())
 
-
     async def receive_data(self) -> None:
         while not self.started:
             await asyncio.sleep(1)
@@ -30,9 +28,7 @@ class Client:
             print("hello!")
 
     async def recv(self) -> bytes:
-
         return await self.reader.read(1024)
-        
 
 
 if __name__ == "__main__":
@@ -42,7 +38,7 @@ if __name__ == "__main__":
             [
                 client.run(),
                 # client.receive_data(),
-                client.send_task()
+                client.send_task(),
             ]
         )
     )
