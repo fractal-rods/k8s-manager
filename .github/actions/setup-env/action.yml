@@ -1,0 +1,13 @@
+name: Setup environment
+description: Setup the environment used for testing and building flutter apps
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    - run: pip install --upgrade pip
+      shell: bash
+    - run: pip install -r requirements.txt
+      shell: bash

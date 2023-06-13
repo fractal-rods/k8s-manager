@@ -1,0 +1,12 @@
+name: Pull request title check
+description: Check if PR title matches conventional commit specification
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    - uses: actions/checkout@v3
+    - name: Match title to regex
+      shell: bash
+      run: python3 ./.github/actions/cc-title/check_title.py "${{ github.event.pull_request.title }}"
