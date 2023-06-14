@@ -1,78 +1,11 @@
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, jsonify, current_app, request, send_from_directory
 from werkzeug.utils import secure_filename
 import os
-import zmq
 
-ALLOWED_EXTENSIONS = set(
-    [
-        "py",
-    ]
-)
+from flask_app.service.services import REQUEST, send_request, check_filename
+
 
 bp = Blueprint("v1", __name__, url_prefix="/api/v1")
-
-REQUEST = {"cmd": None, "args": None}
-REQUEST_TIMEOUT = 2500
-REQUEST_RETRIES = 3
-
-
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-def send_request(req: dict):
-    """
-    This method is for sending request for the backend-service
-    it capsulates lot of the logic required to make a successful
-    request. The method always returns a reply even when the server doesn't
-    respond.
-    """
-    __context = zmq.Context.instance()
-    _client: zmq.Socket = __context.socket(zmq.REQ)
-    _client.connect(os.environ.get("SOCKET_ADDRESS", "tcp://0.0.0.0:5555"))
-
-    _poll = zmq.Poller()
-    _poll.register(_client, zmq.POLLIN)
-
-    sequence = 0
-    retries_left = REQUEST_RETRIES
-    while retries_left:
-        sequence += 1
-
-        print("Sending request to server")
-        _client.send_json(req)
-
-        expect_reply = True
-        while expect_reply:
-            socks = dict(_poll.poll(REQUEST_TIMEOUT))
-            if socks.get(_client) == zmq.POLLIN:
-                reply = _client.recv_json()
-                # No reply -> Try again.
-                if not reply:
-                    break
-                # Reply received so stop.
-                else:
-                    print("Response from server", reply)
-                    retries_left = REQUEST_RETRIES
-                    expect_reply = False
-            else:
-                reply = {"Error": "No response from server"}
-                print("No response from server, retrying…")
-                _client.setsockopt(zmq.LINGER, 0)
-                _client.close()
-                _poll.unregister(_client)
-                retries_left -= 1
-                if retries_left == 0:
-                    print("Server seems to be offline, abandoning")
-                    break
-                print("Reconnecting and resending request")
-                # Create new connection
-                _client: zmq.Socket = __context.socket(zmq.REQ)
-                _client.connect(os.environ.get("SOCKET_ADDRESS", "tcp://0.0.0.0:5555"))
-                _poll.register(_client, zmq.POLLIN)
-                _client.send_json(req)
-
-            return reply
 
 
 @bp.route("/version", methods=["GET"])
@@ -97,6 +30,8 @@ def create_task(task_name: str):
     3. TODO: send the task to backend service to be scheduled
     """
     # TODO: add example when returning error
+
+    # Is this a good way to process requests semantically?
     if "file" not in request.files:
         return jsonify({"status": "file required in the request"}), 400
 
@@ -118,7 +53,7 @@ def create_task(task_name: str):
     if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task already exists"}), 400
 
-    if file and allowed_file(file.filename):
+    if file and check_filename(file.filename):
         filename = secure_filename(file.filename)
         os.makedirs(os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name))
         file.save(
