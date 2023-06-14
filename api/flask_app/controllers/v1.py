@@ -2,18 +2,18 @@ from flask import Blueprint, jsonify, current_app, request, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 
-from flask_app.service.services import REQUEST, send_request, check_filename
+from flask_app.services.service import REQUEST, send_request, check_filename
 
 
-bp = Blueprint("v1", __name__, url_prefix="/api/v1")
+blueprint = Blueprint("v1", __name__, url_prefix="/api/v1")
 
 
-@bp.route("/version", methods=["GET"])
+@blueprint.route("/version", methods=["GET"])
 def index():
     return jsonify({"version": "1.0"}), 200
 
 
-@bp.route("/tasks", methods=["GET"])
+@blueprint.route("/tasks", methods=["GET"])
 def get_tasks():
     req = REQUEST.copy()
     req["cmd"] = "GET-TASKS"
@@ -22,7 +22,7 @@ def get_tasks():
     return jsonify(reply), 200
 
 
-@bp.route("/tasks/<string:task_name>", methods=["POST"])
+@blueprint.route("/tasks/<string:task_name>", methods=["POST"])
 def create_task(task_name: str):
     """
     1. check if the task_name does not exist
@@ -71,7 +71,7 @@ def create_task(task_name: str):
         return jsonify({"status": "Error!"}), 500
 
 
-@bp.route("/tasks/<string:task_name>", methods=["DELETE"])
+@blueprint.route("/tasks/<string:task_name>", methods=["DELETE"])
 def delete_task(task_name: str):
     # 1. check the task exists
     # 2. shutdown the task if it is running
@@ -107,7 +107,7 @@ def delete_task(task_name: str):
     )
 
 
-@bp.route("/tasks/<string:task_name>", methods=["PUT"])
+@blueprint.route("/tasks/<string:task_name>", methods=["PUT"])
 def update_task(task_name: str):
     # TODO:
     # 1. check the task exists
@@ -117,7 +117,7 @@ def update_task(task_name: str):
     return jsonify({"task": task_name}), 200
 
 
-@bp.route("/tasks/<string:task_name>/start", methods=["POST"])
+@blueprint.route("/tasks/<string:task_name>/start", methods=["POST"])
 def start_task(task_name: str):
     # 1. check the task exists
     # 2. start the task if it is not running
@@ -132,7 +132,7 @@ def start_task(task_name: str):
     return jsonify(reply), 200
 
 
-@bp.route("/tasks/<string:task_name>/stop", methods=["POST"])
+@blueprint.route("/tasks/<string:task_name>/stop", methods=["POST"])
 def stop_task(task_name: str):
     # 1. check the task exists
     # 2. stop the task if it is running
@@ -147,7 +147,7 @@ def stop_task(task_name: str):
     return jsonify(reply), 200 if reply["status"] == "ok" else 404
 
 
-@bp.route("/tasks/<string:task_name>/status", methods=["GET"])
+@blueprint.route("/tasks/<string:task_name>/status", methods=["GET"])
 def task_status(task_name: str):
     # TODO:
     # 1. check the task exists
@@ -163,7 +163,7 @@ def task_status(task_name: str):
     return jsonify(reply), 200
 
 
-@bp.route("/tasks/<string:task_name>/results", methods=["GET"])
+@blueprint.route("/tasks/<string:task_name>/results", methods=["GET"])
 def task_results(task_name: str):
     # TODO:
     # 1. check the task exists
@@ -171,7 +171,7 @@ def task_results(task_name: str):
     return jsonify({"task": task_name}), 200
 
 
-@bp.route("/tasks/<string:task_name>/download", methods=["GET"])
+@blueprint.route("/tasks/<string:task_name>/download", methods=["GET"])
 def download_task(task_name: str):
     uploads = os.path.join(current_app.config["UPLOAD_DIRECTORY"], task_name)
     if len(os.listdir(uploads)) == 0:

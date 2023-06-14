@@ -2,7 +2,7 @@ import os
 
 from flask import Flask
 
-from flask_app.controller import v1
+from flask_app.controllers.v1 import blueprint
 
 
 def create_app(test_config=None):
@@ -13,7 +13,7 @@ def create_app(test_config=None):
 
     # register the blueprints
     # The blueprints define API routes for request handling.
-    app.register_blueprint(v1.bp)
+    app.register_blueprint(blueprint)
 
     app.config["UPLOAD_DIRECTORY"] = UPLOAD_DIRECTORY
 

@@ -65,7 +65,7 @@ def send_request(req: dict):
                 _poll.register(_client, zmq.POLLIN)
                 _client.send_json(req)
 
-            return reply
+        return reply
 
 
 def check_filename(filename):
