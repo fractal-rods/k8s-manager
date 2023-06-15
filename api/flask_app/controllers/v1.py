@@ -1,8 +1,22 @@
-from flask import Blueprint, jsonify, current_app, request, send_from_directory
+"""
+This file contains only the blueprint which defines the API routes.
+It is recommended that most of the logic that the routes use is 
+to be defined in services/ to keep the codebase simple as possible.
+This also leaves more space for middleware of the routes if something
+like that is required in the future. If the routes start to clutter 
+this file they should be moved and organized inside related folders.
+"""
+
+from flask import Blueprint, jsonify, current_app, send_from_directory
 from werkzeug.utils import secure_filename
 import os
 
-from flask_app.services.service import REQUEST, send_request, check_filename
+from flask_app.services.service import (
+    REQUEST,
+    check_create_request,
+    check_filename,
+    send_request,
+)
 
 
 blueprint = Blueprint("v1", __name__, url_prefix="/api/v1")
@@ -31,25 +45,13 @@ def create_task(task_name: str):
     """
     # TODO: add example when returning error
 
-    # Is this a good way to process requests semantically?
-    if "file" not in request.files:
-        return jsonify({"status": "file required in the request"}), 400
+    try:
+        file, command, return_type = check_create_request()
+    except Exception:
+        error = check_create_request()
+        return error
 
-    file = request.files["file"]
-
-    if "cmd" not in request.form:
-        return jsonify({"status": "command to run is not specified"}), 400
-
-    command = request.form["cmd"]
-
-    if "rt" not in request.form:
-        return jsonify({"status": "return type is not specified"}), 400
-
-    return_type = request.form["rt"]
-
-    if file.filename == "":
-        return jsonify({"status": "no file"}), 400
-
+    # TODO: move upload directory to server side.
     if task_name in os.listdir(current_app.config["UPLOAD_DIRECTORY"]):
         return jsonify({"status": "task already exists"}), 400
 
@@ -65,6 +67,7 @@ def create_task(task_name: str):
         req["args"] = [task_name, command, return_type]
         send_request(req)
 
+        # TODO: This should come as a reply from the server
         return jsonify({"status": f"task: {task_name} created successfuly."}), 201
 
     else:
