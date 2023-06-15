@@ -91,3 +91,28 @@ python3 service.py -a <host address> -p <port>
 cd api/
 python app.py
 ```
+
+# Development
+
+This part is to help developers get on track.
+
+## Python
+
+```shell
+# Create virtual environment
+python3 -m venv venv
+
+# Activate the venv
+source venv/bin/activate
+
+# Install requirements depending on what you are working on
+pip install -r <folder>/requirements.txt
+
+```
+
+## Pre-commit
+
+```shell
+# Add hooks for this repository
+pre-commit install
+```
