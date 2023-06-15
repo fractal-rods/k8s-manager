@@ -1,3 +1,4 @@
+from flask import jsonify, request
 import zmq
 import os
 
@@ -10,6 +11,10 @@ ALLOWED_EXTENSIONS = set(
 REQUEST_TIMEOUT = 2500
 REQUEST_RETRIES = 3
 REQUEST = {"cmd": None, "args": None}
+
+
+def check_filename(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def send_request(req: dict):
@@ -68,5 +73,23 @@ def send_request(req: dict):
         return reply
 
 
-def check_filename(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+def check_create_request():
+    if "file" not in request.files:
+        return jsonify({"error": "file required in the request"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "no file"}), 400
+
+    if "cmd" not in request.form:
+        return jsonify({"error": "command to run is not specified"}), 400
+
+    command = request.form["cmd"]
+
+    if "rt" not in request.form:
+        return jsonify({"error": "return type is not specified"}), 400
+
+    return_type = request.form["rt"]
+
+    return file, command, return_type
